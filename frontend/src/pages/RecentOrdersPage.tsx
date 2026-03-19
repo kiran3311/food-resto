@@ -42,6 +42,19 @@ export const RecentOrdersPage = (): JSX.Element => {
     }
   };
 
+  const voidOrder = async (order: Order): Promise<void> => {
+    if (order.status === "Cancelled") {
+      return;
+    }
+
+    if (!window.confirm(`Void order ${order.orderToken}?`)) {
+      return;
+    }
+
+    await updateStatus(order._id, "Cancelled");
+    toast.success(`Order ${order.orderToken} voided`);
+  };
+
   const showTodayOrders = (): void => {
     const today = getTodayDate();
     setDateFrom(today);
@@ -118,7 +131,7 @@ export const RecentOrdersPage = (): JSX.Element => {
                 <th className="p-2">Customer</th>
                 <th className="p-2">Total</th>
                 <th className="p-2">Status</th>
-                <th className="p-2">Receipt</th>
+                <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -148,13 +161,23 @@ export const RecentOrdersPage = (): JSX.Element => {
                     </select>
                   </td>
                   <td className="p-2">
-                    <button
-                      type="button"
-                      className="rounded-lg border border-slate-300 px-2 py-1 text-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-400 hover:bg-brand-50 dark:border-slate-600 dark:hover:border-brand-500/60 dark:hover:bg-slate-800"
-                      onClick={() => window.open(`/orders/${order._id}/receipt`, "_blank")}
-                    >
-                      Print
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="rounded-lg border border-slate-300 px-2 py-1 text-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-400 hover:bg-brand-50 dark:border-slate-600 dark:hover:border-brand-500/60 dark:hover:bg-slate-800"
+                        onClick={() => window.open(`/orders/${order._id}/receipt`, "_blank")}
+                      >
+                        Print
+                      </button>
+                      <button
+                        type="button"
+                        disabled={order.status === "Cancelled"}
+                        className="rounded-lg border border-rose-300 px-2 py-1 text-xs text-rose-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-rose-950/20"
+                        onClick={() => voidOrder(order)}
+                      >
+                        {order.status === "Cancelled" ? "Voided" : "Void Order"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
