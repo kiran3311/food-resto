@@ -7,6 +7,7 @@ export interface IOrderItem {
   price: number;
   quantity: number;
   cost: number;
+  currency: "USD" | "INR" | "EUR" | "GBP";
 }
 
 export interface IOrder extends Document {
@@ -16,6 +17,7 @@ export interface IOrder extends Document {
   items: IOrderItem[];
   totalAmount: number;
   totalCost: number;
+  currency: "USD" | "INR" | "EUR" | "GBP";
   status: "Pending" | "Preparing" | "Ready" | "Completed" | "Cancelled";
   createdAt: Date;
 }
@@ -50,6 +52,12 @@ const orderItemSchema = new Schema<IOrderItem>(
       required: true,
       min: 0,
       default: 0
+    },
+    currency: {
+      type: String,
+      enum: ["USD", "INR", "EUR", "GBP"],
+      required: true,
+      default: "USD"
     }
   },
   { _id: false }
@@ -90,6 +98,12 @@ const orderSchema = new Schema<IOrder>(
       required: true,
       min: 0,
       default: 0
+    },
+    currency: {
+      type: String,
+      enum: ["USD", "INR", "EUR", "GBP"],
+      required: true,
+      default: "USD"
     },
     status: {
       type: String,

@@ -4,6 +4,7 @@ import { PageHeader } from "../components/PageHeader";
 import { comboService } from "../services/comboService";
 import { menuService } from "../services/menuService";
 import { Combo, MenuItem } from "../types";
+import { formatMoney, getCurrencySymbol } from "../utils/currency";
 
 interface ComboFormState {
   comboName: string;
@@ -29,6 +30,11 @@ export const CombosPage = (): JSX.Element => {
       const found = menuItems.find((menuItem) => menuItem._id === itemId);
       return sum + (found?.price ?? 0);
     }, 0);
+  }, [form.items, menuItems]);
+
+  const selectedCurrency = useMemo(() => {
+    const selectedItem = menuItems.find((menuItem) => form.items.includes(menuItem._id));
+    return selectedItem?.currency ?? "USD";
   }, [form.items, menuItems]);
 
   const selectedDiscount = useMemo(() => {
@@ -149,7 +155,7 @@ export const CombosPage = (): JSX.Element => {
                 }}
               />
               <span>
-                {item.itemName} (${item.price.toFixed(2)})
+                {item.itemName} ({formatMoney(item.price, item.currency ?? "USD")})
               </span>
             </label>
           ))}
@@ -160,12 +166,12 @@ export const CombosPage = (): JSX.Element => {
             className="rounded-xl border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
             type="number"
             step="0.01"
-            placeholder="Combo price"
+            placeholder={`Combo price (${getCurrencySymbol(selectedCurrency)})`}
             value={form.comboPrice}
             onChange={(event) => setForm((prev) => ({ ...prev, comboPrice: event.target.value }))}
           />
           <div className="rounded-xl border border-slate-200 p-2 text-sm dark:border-slate-700">
-            Original: ${selectedOriginal.toFixed(2)}
+            Original: {formatMoney(selectedOriginal, selectedCurrency)}
           </div>
           <div className="rounded-xl border border-slate-200 p-2 text-sm dark:border-slate-700">
             Discount: {selectedDiscount.toFixed(2)}%
@@ -204,7 +210,7 @@ export const CombosPage = (): JSX.Element => {
               <tr key={combo._id} className="border-t border-slate-200 dark:border-slate-700">
                 <td className="p-2 font-medium">{combo.comboName}</td>
                 <td className="p-2">{getComboItemNames(combo)}</td>
-                <td className="p-2">${combo.comboPrice.toFixed(2)}</td>
+                <td className="p-2">{formatMoney(combo.comboPrice, combo.currency ?? "USD")}</td>
                 <td className="p-2">{combo.discountPercentage.toFixed(2)}%</td>
                 <td className="p-2">
                   <div className="flex gap-2">

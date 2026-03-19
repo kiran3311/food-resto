@@ -103,7 +103,8 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
           name: item.itemName,
           price: item.price,
           quantity: line.quantity,
-          cost: item.costPrice ?? 0
+          cost: item.costPrice ?? 0,
+          currency: item.currency
         };
       }
 
@@ -123,9 +124,18 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
         name: combo.comboName,
         price: combo.comboPrice,
         quantity: line.quantity,
-        cost: comboCost
+        cost: comboCost,
+        currency: combo.currency
       };
     });
+
+  const currencies = Array.from(new Set(orderItems.map((item) => item.currency)));
+  if (currencies.length !== 1) {
+    throw new AppError(
+      "All order items must use the same currency",
+      StatusCodes.BAD_REQUEST
+    );
+  }
 
   const totals = orderItems.reduce(
     (acc, item) => {
@@ -145,6 +155,7 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
     items: orderItems,
     totalAmount: Number(totals.totalAmount.toFixed(2)),
     totalCost: Number(totals.totalCost.toFixed(2)),
+    currency: currencies[0],
     status: "Pending"
   });
 

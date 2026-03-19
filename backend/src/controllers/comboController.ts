@@ -31,7 +31,7 @@ const calculateComboPricing = async (
   stallId: string,
   itemIds: Types.ObjectId[],
   comboPrice: number
-): Promise<{ originalPrice: number; discountPercentage: number }> => {
+): Promise<{ originalPrice: number; discountPercentage: number; currency: string }> => {
   const menuItems = await MenuItem.find({
     _id: { $in: itemIds },
     stallId
@@ -40,6 +40,14 @@ const calculateComboPricing = async (
   if (menuItems.length !== itemIds.length) {
     throw new AppError(
       "Some menu items were not found in your stall",
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  const currencies = Array.from(new Set(menuItems.map((item) => item.currency)));
+  if (currencies.length !== 1) {
+    throw new AppError(
+      "All combo items must use the same currency",
       StatusCodes.BAD_REQUEST
     );
   }
@@ -57,7 +65,7 @@ const calculateComboPricing = async (
       ? Number((((originalPrice - comboPrice) / originalPrice) * 100).toFixed(2))
       : 0;
 
-  return { originalPrice, discountPercentage };
+  return { originalPrice, discountPercentage, currency: currencies[0] };
 };
 
 export const createCombo = catchAsync(async (req: Request, res: Response) => {
@@ -71,7 +79,7 @@ export const createCombo = catchAsync(async (req: Request, res: Response) => {
   const stall = await getOwnerStall(req.user.id);
   const itemIds = toObjectIds(items);
 
-  const { originalPrice, discountPercentage } = await calculateComboPricing(
+  const { originalPrice, discountPercentage, currency } = await calculateComboPricing(
     stall.id,
     itemIds,
     comboPrice
@@ -83,6 +91,7 @@ export const createCombo = catchAsync(async (req: Request, res: Response) => {
     items: itemIds,
     comboPrice,
     originalPrice,
+    currency,
     discountPercentage
   });
 
@@ -100,7 +109,7 @@ export const listCombos = catchAsync(async (req: Request, res: Response) => {
   const stall = await getOwnerStall(req.user.id);
 
   const combos = await Combo.find({ stallId: stall.id })
-    .populate("items", "itemName price")
+    .populate("items", "itemName price currency")
     .sort({ createdAt: -1 });
 
   res.status(StatusCodes.OK).json({ combos });
@@ -126,7 +135,7 @@ export const updateCombo = catchAsync(async (req: Request, res: Response) => {
     : combo.items.map((item) => new Types.ObjectId(item.toString()));
   const updatedComboPrice = comboPrice !== undefined ? comboPrice : combo.comboPrice;
 
-  const { originalPrice, discountPercentage } = await calculateComboPricing(
+  const { originalPrice, discountPercentage, currency } = await calculateComboPricing(
     stall.id,
     itemIds,
     updatedComboPrice
@@ -136,6 +145,7 @@ export const updateCombo = catchAsync(async (req: Request, res: Response) => {
   combo.items = itemIds;
   combo.comboPrice = updatedComboPrice;
   combo.originalPrice = originalPrice;
+  combo.currency = currency as "USD" | "INR" | "EUR" | "GBP";
   combo.discountPercentage = discountPercentage;
 
   await combo.save();

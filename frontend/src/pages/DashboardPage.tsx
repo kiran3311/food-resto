@@ -14,23 +14,29 @@ import {
 import { PageHeader } from "../components/PageHeader";
 import { StatCard } from "../components/StatCard";
 import { dashboardService } from "../services/dashboardService";
+import { menuService } from "../services/menuService";
 import { stallService } from "../services/stallService";
 import { DashboardSummary } from "../types";
 import { Stall } from "../types";
+import { CurrencyCode, formatMoney, getPrimaryCurrency } from "../utils/currency";
 import { resolveMediaUrl } from "../utils/media";
-
-const currency = (value: number): string => `$${value.toFixed(2)}`;
 
 export const DashboardPage = (): JSX.Element => {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [stall, setStall] = useState<Stall | null>(null);
+  const [dashboardCurrency, setDashboardCurrency] = useState<CurrencyCode>("USD");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.allSettled([dashboardService.getSummary(), stallService.getMyStall()])
+    Promise.allSettled([
+      dashboardService.getSummary(),
+      stallService.getMyStall(),
+      menuService.list({ page: 1, limit: 100 })
+    ])
       .then((results) => {
         const summaryResult = results[0];
         const stallResult = results[1];
+        const menuResult = results[2];
 
         if (summaryResult.status === "fulfilled") {
           setData(summaryResult.value);
@@ -38,6 +44,12 @@ export const DashboardPage = (): JSX.Element => {
 
         if (stallResult.status === "fulfilled") {
           setStall(stallResult.value);
+        }
+
+        if (menuResult.status === "fulfilled") {
+          setDashboardCurrency(
+            getPrimaryCurrency(menuResult.value.items.map((item) => item.currency ?? "USD"))
+          );
         }
       })
       .finally(() => setLoading(false));
@@ -83,12 +95,12 @@ export const DashboardPage = (): JSX.Element => {
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard label="Orders Today" value={String(data.today.totalOrdersToday)} />
         <StatCard label="Cancelled Today" value={String(data.today.cancelledOrdersToday)} />
-        <StatCard label="Revenue Today" value={currency(data.today.totalRevenueToday)} />
-        <StatCard label="Profit Today" value={currency(data.today.totalProfitToday)} />
+        <StatCard label="Revenue Today" value={formatMoney(data.today.totalRevenueToday, dashboardCurrency)} />
+        <StatCard label="Profit Today" value={formatMoney(data.today.totalProfitToday, dashboardCurrency)} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card dark:border-slate-700 dark:bg-slate-900">
           <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Monthly Revenue / Profit / Cancelled</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -107,7 +119,7 @@ export const DashboardPage = (): JSX.Element => {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card dark:border-slate-700 dark:bg-slate-900">
           <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Top Selling Items</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -123,7 +135,7 @@ export const DashboardPage = (): JSX.Element => {
         </section>
       </div>
 
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card dark:border-slate-700 dark:bg-slate-900">
         <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Combo Sales Analytics</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -139,7 +151,7 @@ export const DashboardPage = (): JSX.Element => {
                 <tr key={row._id} className="border-t border-slate-200 dark:border-slate-700">
                   <td className="py-2">{row._id}</td>
                   <td className="py-2">{row.count}</td>
-                  <td className="py-2">{currency(row.revenue)}</td>
+                  <td className="py-2">{formatMoney(row.revenue, dashboardCurrency)}</td>
                 </tr>
               ))}
             </tbody>

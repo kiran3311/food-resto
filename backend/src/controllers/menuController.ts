@@ -13,6 +13,7 @@ const createMenuSchema = z.object({
     description: z.string().max(600).optional(),
     price: z.coerce.number().min(0),
     costPrice: z.coerce.number().min(0).optional(),
+    currency: z.enum(["USD", "INR", "EUR", "GBP"]).optional(),
     category: z.string().max(80).optional(),
     isAvailable: z.coerce.boolean().optional()
   })
@@ -24,6 +25,7 @@ const updateMenuSchema = z.object({
     description: z.string().max(600).optional(),
     price: z.coerce.number().min(0).optional(),
     costPrice: z.coerce.number().min(0).optional(),
+    currency: z.enum(["USD", "INR", "EUR", "GBP"]).optional(),
     category: z.string().max(80).optional(),
     isAvailable: z.coerce.boolean().optional()
   })
@@ -47,6 +49,8 @@ export const createMenuItem = catchAsync(async (req: Request, res: Response) => 
   createMenuSchema.parse({ body: req.body });
 
   const stall = await getOwnerStall(req.user.id);
+  const isAvailable =
+    req.body.isAvailable !== undefined ? req.body.isAvailable === "true" : true;
 
   const menuItem = await MenuItem.create({
     stallId: stall.id,
@@ -54,9 +58,9 @@ export const createMenuItem = catchAsync(async (req: Request, res: Response) => 
     description: req.body.description,
     price: Number(req.body.price),
     costPrice: req.body.costPrice !== undefined ? Number(req.body.costPrice) : 0,
+    currency: req.body.currency ?? "USD",
     category: req.body.category,
-    isAvailable:
-      req.body.isAvailable !== undefined ? Boolean(req.body.isAvailable) : true,
+    isAvailable,
     image: req.file ? toPublicFilePath(req.file.filename) : undefined
   });
 
@@ -120,6 +124,10 @@ export const updateMenuItem = catchAsync(async (req: Request, res: Response) => 
   const updateData: Record<string, unknown> = {
     ...req.body
   };
+
+  if (req.body.isAvailable !== undefined) {
+    updateData.isAvailable = req.body.isAvailable === "true";
+  }
 
   if (req.file) {
     updateData.image = toPublicFilePath(req.file.filename);

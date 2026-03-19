@@ -44,6 +44,7 @@ const seed = async (): Promise<void> => {
       description: "Grilled patty with lettuce and sauce",
       price: 8.5,
       costPrice: 4,
+      currency: "USD",
       image: "https://picsum.photos/seed/classic-burger/800/600",
       category: "Main",
       isAvailable: true
@@ -54,6 +55,7 @@ const seed = async (): Promise<void> => {
       description: "Golden fries",
       price: 3.5,
       costPrice: 1.2,
+      currency: "USD",
       image: "https://picsum.photos/seed/crispy-fries/800/600",
       category: "Sides",
       isAvailable: true
@@ -64,6 +66,7 @@ const seed = async (): Promise<void> => {
       description: "Chilled soft drink",
       price: 2,
       costPrice: 0.7,
+      currency: "USD",
       image: "https://picsum.photos/seed/cold-cola/800/600",
       category: "Drinks",
       isAvailable: true
@@ -76,6 +79,7 @@ const seed = async (): Promise<void> => {
     items: [burger.id, fries.id, cola.id],
     originalPrice: 14,
     comboPrice: 11.5,
+    currency: "USD",
     discountPercentage: 17.86
   });
 
@@ -91,11 +95,13 @@ const seed = async (): Promise<void> => {
           name: combo.comboName,
           price: combo.comboPrice,
           quantity: 1,
-          cost: 5.9
+          cost: 5.9,
+          currency: "USD"
         }
       ],
       totalAmount: 11.5,
       totalCost: 5.9,
+      currency: "USD",
       status: "Completed"
     },
     {
@@ -109,11 +115,13 @@ const seed = async (): Promise<void> => {
           name: burger.itemName,
           price: burger.price,
           quantity: 1,
-          cost: burger.costPrice ?? 0
+          cost: burger.costPrice ?? 0,
+          currency: "USD"
         }
       ],
       totalAmount: burger.price,
       totalCost: burger.costPrice ?? 0,
+      currency: "USD",
       status: "Cancelled"
     }
   ]);

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { orderService } from "../services/orderService";
 import { Order, Stall } from "../types";
+import { formatMoney } from "../utils/currency";
 import { resolveMediaUrl } from "../utils/media";
 
 export const ReceiptPage = (): JSX.Element => {
@@ -75,14 +76,14 @@ export const ReceiptPage = (): JSX.Element => {
               <tr key={`${item.itemId}-${index}`}>
                 <td>{item.name}</td>
                 <td className="text-right">{item.quantity}</td>
-                <td className="text-right">${(item.price * item.quantity).toFixed(2)}</td>
+                <td className="text-right">{formatMoney(item.price * item.quantity, item.currency ?? "USD")}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         <div className="mt-2 border-t border-dashed border-slate-400 pt-2">
-          <p className="text-right text-sm font-bold">Total: ${order.totalAmount.toFixed(2)}</p>
+          <p className="text-right text-sm font-bold">Total: {formatMoney(order.totalAmount, order.currency ?? "USD")}</p>
         </div>
 
         <p className="mt-3 text-center text-[11px]">Thank you. Please keep this token for pickup.</p>

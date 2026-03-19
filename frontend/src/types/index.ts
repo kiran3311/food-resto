@@ -32,6 +32,7 @@ export interface MenuItem {
   description?: string;
   price: number;
   costPrice?: number;
+  currency: "USD" | "INR" | "EUR" | "GBP";
   image?: string;
   category?: string;
   isAvailable: boolean;
@@ -42,10 +43,12 @@ export interface Combo {
   _id: string;
   stallId: string;
   comboName: string;
+  currency: "USD" | "INR" | "EUR" | "GBP";
   items: Array<{
     _id: string;
     itemName?: string;
     price?: number;
+    currency?: "USD" | "INR" | "EUR" | "GBP";
   }>;
   originalPrice: number;
   comboPrice: number;
@@ -62,6 +65,7 @@ export interface OrderItem {
   price: number;
   quantity: number;
   cost: number;
+  currency: "USD" | "INR" | "EUR" | "GBP";
 }
 
 export interface Order {
@@ -72,6 +76,7 @@ export interface Order {
   items: OrderItem[];
   totalAmount: number;
   totalCost: number;
+  currency: "USD" | "INR" | "EUR" | "GBP";
   status: OrderStatus;
   createdAt: string;
 }

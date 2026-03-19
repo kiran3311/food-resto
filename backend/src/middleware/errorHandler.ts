@@ -6,10 +6,18 @@ import { AppError } from "../utils/appError";
 
 export const errorHandler = (
   error: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void => {
+  // Centralized API error logging for backend debugging and monitoring.
+  console.error("API Error", {
+    method: req.method,
+    path: req.originalUrl,
+    message: error.message,
+    stack: error.stack
+  });
+
   if (error instanceof AppError) {
     res.status(error.statusCode).json({
       message: error.message

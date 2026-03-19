@@ -6,6 +6,7 @@ export interface ICombo extends Document {
   items: Types.ObjectId[];
   originalPrice: number;
   comboPrice: number;
+  currency: "USD" | "INR" | "EUR" | "GBP";
   discountPercentage: number;
   createdAt: Date;
 }
@@ -39,6 +40,12 @@ const comboSchema = new Schema<ICombo>(
       type: Number,
       required: true,
       min: 0
+    },
+    currency: {
+      type: String,
+      enum: ["USD", "INR", "EUR", "GBP"],
+      required: true,
+      default: "USD"
     },
     discountPercentage: {
       type: Number,

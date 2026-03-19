@@ -6,6 +6,7 @@ export interface IMenuItem extends Document {
   description?: string;
   price: number;
   costPrice?: number;
+  currency: "USD" | "INR" | "EUR" | "GBP";
   image?: string;
   category?: string;
   isAvailable: boolean;
@@ -38,6 +39,11 @@ const menuItemSchema = new Schema<IMenuItem>(
       type: Number,
       min: 0,
       default: 0
+    },
+    currency: {
+      type: String,
+      enum: ["USD", "INR", "EUR", "GBP"],
+      default: "USD"
     },
     image: {
       type: String

@@ -8,7 +8,13 @@ interface OrderLinePayload {
 }
 
 export const orderService = {
-  async list(params: { page?: number; limit?: number; status?: OrderStatus } = {}): Promise<{ orders: Order[]; pagination: { total: number; page: number; totalPages: number } }> {
+  async list(params: {
+    page?: number;
+    limit?: number;
+    status?: OrderStatus;
+    dateFrom?: string;
+    dateTo?: string;
+  } = {}): Promise<{ orders: Order[]; pagination: { total: number; page: number; totalPages: number } }> {
     const response = await api.get("/orders", { params });
     return response.data;
   },
