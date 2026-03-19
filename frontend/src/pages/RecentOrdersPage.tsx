@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { PrintButton } from "../components/PrintButton";
+import { PrinterSelector } from "../components/PrinterSelector";
 import { PageHeader } from "../components/PageHeader";
 import { orderService } from "../services/orderService";
 import { Order, OrderStatus } from "../types";
@@ -75,6 +77,7 @@ export const RecentOrdersPage = (): JSX.Element => {
       <PageHeader
         title="Recent Orders"
         subtitle="Review date-wise orders, update status, and print receipts"
+        actions={<PrinterSelector />}
       />
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card dark:border-slate-700 dark:bg-slate-900">
@@ -162,13 +165,7 @@ export const RecentOrdersPage = (): JSX.Element => {
                   </td>
                   <td className="p-2">
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        className="rounded-lg border border-slate-300 px-2 py-1 text-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-400 hover:bg-brand-50 dark:border-slate-600 dark:hover:border-brand-500/60 dark:hover:bg-slate-800"
-                        onClick={() => window.open(`/orders/${order._id}/receipt`, "_blank")}
-                      >
-                        Print
-                      </button>
+                      <PrintButton orderId={order._id} />
                       <button
                         type="button"
                         disabled={order.status === "Cancelled"}

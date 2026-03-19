@@ -81,6 +81,10 @@ export interface Order {
   createdAt: string;
 }
 
+export interface PrintableOrder extends Order {
+  stall?: Pick<Stall, "stallName" | "logo" | "contact" | "address"> | null;
+}
+
 export interface DashboardSummary {
   today: {
     totalOrdersToday: number;

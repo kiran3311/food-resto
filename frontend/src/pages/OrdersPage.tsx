@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { PageHeader } from "../components/PageHeader";
+import { PrinterSelector } from "../components/PrinterSelector";
 import { comboService } from "../services/comboService";
 import { menuService } from "../services/menuService";
 import { orderService } from "../services/orderService";
+import { printService } from "../services/printService";
 import { Combo, MenuItem } from "../types";
 import { formatMoney, getPrimaryCurrency } from "../utils/currency";
 import { resolveMediaUrl } from "../utils/media";
@@ -28,6 +30,7 @@ export const OrdersPage = (): JSX.Element => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [combos, setCombos] = useState<Combo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submittingMode, setSubmittingMode] = useState<"save" | "print" | null>(null);
 
   const loadData = (): Promise<void> =>
     Promise.all([menuService.list({ page: 1, limit: 100 }), comboService.list()])
@@ -101,7 +104,7 @@ export const OrdersPage = (): JSX.Element => {
     ]);
   };
 
-  const createOrder = async (): Promise<void> => {
+  const createOrder = async (autoPrint = false): Promise<void> => {
     const validLines = lines.filter((line) => Boolean(line.entityId));
     if (validLines.length === 0) {
       toast.error("Add at least one valid order line");
@@ -114,6 +117,7 @@ export const OrdersPage = (): JSX.Element => {
     }
 
     try {
+      setSubmittingMode(autoPrint ? "print" : "save");
       const created = await orderService.create({
         customerName: customerName.trim() || undefined,
         lines: validLines.map((line) => ({
@@ -125,9 +129,27 @@ export const OrdersPage = (): JSX.Element => {
       toast.success(`Order created (${created.orderToken})`);
       setCustomerName("");
       setLines([createLine()]);
-      window.open(`/orders/${created._id}/receipt`, "_blank");
+
+      if (autoPrint) {
+        try {
+          const response = await orderService.getById(created._id);
+          await printService.printReceipt({
+            ...response.order,
+            stall: response.stall
+          });
+          toast.success("Receipt sent to printer");
+        } catch (error: unknown) {
+          toast.error(
+            error instanceof Error
+              ? `Order created, but printing failed: ${error.message}`
+              : "Order created, but printing failed"
+          );
+        }
+      }
     } catch (_error: unknown) {
       toast.error("Failed to create order");
+    } finally {
+      setSubmittingMode(null);
     }
   };
 
@@ -140,6 +162,7 @@ export const OrdersPage = (): JSX.Element => {
       <PageHeader
         title="Order Management"
         subtitle="Create new counter orders and add available menu items quickly"
+        actions={<PrinterSelector />}
       />
 
       <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card dark:border-slate-700 dark:bg-slate-900">
@@ -246,10 +269,19 @@ export const OrdersPage = (): JSX.Element => {
           </button>
           <button
             type="button"
+            disabled={submittingMode !== null}
             className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-card"
-            onClick={createOrder}
+            onClick={() => createOrder(false)}
           >
-            Place Order
+            {submittingMode === "save" ? "Placing..." : "Place Order"}
+          </button>
+          <button
+            type="button"
+            disabled={submittingMode !== null}
+            className="rounded-xl border border-brand-500 px-4 py-2 text-sm font-semibold text-brand-600 transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-50 hover:shadow-card disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-slate-800"
+            onClick={() => createOrder(true)}
+          >
+            {submittingMode === "print" ? "Printing..." : "Place & Print"}
           </button>
           <p className="ml-auto rounded-full bg-orange-50 px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:scale-[1.02] hover:bg-orange-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
             {hasMixedCurrencies
